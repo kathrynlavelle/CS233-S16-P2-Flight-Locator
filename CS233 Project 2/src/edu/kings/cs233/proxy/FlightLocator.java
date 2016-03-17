@@ -100,24 +100,41 @@ public class FlightLocator {
 	 * Read and collect flight data from index files.
 	 */
 	private void startUp() {
+		/* Map of all datumMocks to prevent duplicates. */
+		Map<Integer, FlightRecord> allMocks = new ListMap<Long, FlightRecord>();
 		try {
+			/* The data file containing all flight information. */
 			theFile = new RandomAccessFile("flights.dat", "r");
 			
 			/* Read index file and add flight numbers and offsets to datumMock. */
 			flightData = new ListMap<Integer, FlightRecord>();
 			flightNum = new RandomAccessFile("flightNum.idx", "r");
 			while (flightNum.getFilePointer() < flightNum.length()) {
-				flightData.add(flightNum.readInt(), new FlightRecord(flightNum.readLong(), theFile));
+				int num = flightNum.readInt();
+				long position = flightNum.readLong();
+				FlightRecord flightRecord = new FlightRecord(position, theFile);
+				flightData.add(num, flightRecord);
+				allMocks.add(position, flightRecord);
 			}
 			
 			/* Read index file and add departure times and offsets to datumMock. */
-			departData = new ListMap<Long, FlightRecord>();
+			List<FlightRecord> flightList = new List<FlightRecord>();
+			departData = new ListMap<Long, flightList>();
 			departTime = new RandomAccessFile("departTime.idx", "r");
 			while (departTime.getFilePointer() < departTime.length()) {
-				departData.add(departTime.readLong(), new FlightRecord(departTime.readLong(), theFile));
-			}
-			
-			
+				long time = departTime.readLong();
+				long position = departTime.readLong();
+				for (Long pos : allMocks.getKeys()) {
+					if (pos.equals(position)) {
+						departData.add(time, allMocks.get(pos));
+					}
+					else {
+						FlightRecord flightRecord = new FlightRecord(position, theFile);
+						//departData.add(time, flightList.add(flightRecord));
+						allMocks.add(position, flightRecord);
+					}
+				}
+			}	
 		}
 		catch(IOException e) {
 			e.printStackTrace();
