@@ -106,7 +106,7 @@ public class FlightLocator {
 			/* The data file containing all flight information. */
 			theFile = new RandomAccessFile("flights.dat", "r");
 			
-			/* Read index file and add flight numbers and offsets to datumMock. */
+			/* Read flight number index file and add flight numbers and offsets to datumMock. */
 			flightData = new ListMap<Integer, FlightRecord>();
 			flightNum = new RandomAccessFile("flightNum.idx", "r");
 			while (flightNum.getFilePointer() < flightNum.length()) {
@@ -117,24 +117,43 @@ public class FlightLocator {
 				allMocks.add(position, flightRecord);
 			}
 			
-			/* Read index file and add departure times and offsets to datumMock. */
-			List<FlightRecord> flightList = new List<FlightRecord>();
-			departData = new ListMap<Long, flightList>();
-			departTime = new RandomAccessFile("departTime.idx", "r");
-			while (departTime.getFilePointer() < departTime.length()) {
-				long time = departTime.readLong();
-				long position = departTime.readLong();
+			/* Read departure time index file and add departure times and offsets to datumMock. */
+			List<FlightRecord> departFlightList = new List<FlightRecord>();
+			departData = new ListMap<Long, departFlightList>();
+			departTimeFile = new RandomAccessFile("departTime.idx", "r");
+			while (departTimeFile.getFilePointer() < departTimeFile.length()) {
+				long time = departTimeFile.readLong();
+				long position = departTimeFile.readLong();
 				for (Long pos : allMocks.getKeys()) {
 					if (pos.equals(position)) {
 						departData.add(time, allMocks.get(pos));
 					}
 					else {
 						FlightRecord flightRecord = new FlightRecord(position, theFile);
-						//departData.add(time, flightList.add(flightRecord));
+						departData.add(time, departFlightList.add(flightRecord));
 						allMocks.add(position, flightRecord);
 					}
 				}
-			}	
+			}
+			
+			/* Read destination index file and add destinations and offsets to datumMock. */
+			List<FlightRecord> destFlightList = new List<FlightRecord>();
+			destData = new ListMap<String, destFlightList>();
+			destinationFile = new RandomAccessFile("destination.idx", "r");
+			while (destinationFile.getFilePointer() < destinationFile.length()) {
+				String dest = destinationFile.readUTF();
+				long position = destinationFile.readLong();
+				for (long pos : allMocks.getKeys()) {
+					if (pos.equals(position)) {
+						destData.add(dest, allMocks.get(pos));
+					}
+					else {
+						FlightRecord flightRecord = new FlightRecord(position, theFile);
+						destData.add(dest, destFlightList.add(flightRecord));
+						allMocks.add(position, flightRecord);
+					}
+				}
+			}
 		}
 		catch(IOException e) {
 			e.printStackTrace();
