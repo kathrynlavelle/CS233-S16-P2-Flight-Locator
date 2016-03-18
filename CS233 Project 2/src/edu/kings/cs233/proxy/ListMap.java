@@ -17,7 +17,7 @@ import edu.kings.cs.util.Map;
  * @author Kathryn Lavelle
  * @version 2016-02-14
  */
-public class ListMap<K, V> implements Map<K, V>{
+public class ListMap<K, V> implements Map<K, V> {
 
 	/**
 	 * List holding all of the entries in our Map.
@@ -210,10 +210,8 @@ public class ListMap<K, V> implements Map<K, V>{
 	/**
 	 * FOR TESTING PURPOSES ONLY! DO NOT REMOVE UNTIL AFTER GRADING!
 	 * 
-	 * @param theKeys
-	 *            List of keys that will used for this Map
-	 * @param theValues
-	 *            List of values that will be used for this Map
+	 * @param theEntries
+	 *            List of entries that will used for this Map
 	 */
 	protected void setList(ArrayPositionList<ListEntry> theEntries) {
 		entries = theEntries;

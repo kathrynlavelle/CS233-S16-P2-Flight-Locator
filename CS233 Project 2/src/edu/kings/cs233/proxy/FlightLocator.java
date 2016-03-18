@@ -34,6 +34,9 @@ public class FlightLocator implements ActionListener {
 	/** Map of destinations to a list of FlightRecords. */
 	private ListMap<String, ArrayPositionList<FlightRecord>> destData;
 	
+	/** Map of all proxy objects. */
+	private Map<Long, FlightRecord> allMocks;
+	
 	/** Data file where all the records are stored. */
 	private RandomAccessFile theFile;
 	
@@ -179,7 +182,12 @@ public class FlightLocator implements ActionListener {
 		else {
 			// Add record to data file.
 			FlightRecord record = new FlightRecord(flight_number, destination, departure_time, arrival_time, theFile);
-			
+			// Add record to map of proxy objects for data re-write later.
+			try {
+				allMocks.add(theFile.length(), record);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 			// Update flight data.
 			flightData.add(flight_number, record);
 			
@@ -370,14 +378,14 @@ public class FlightLocator implements ActionListener {
 	 */
 	private void startUp() {
 		// Map of all datumMocks to prevent duplicates.
-		Map<Long, FlightRecord> allMocks = new ListMap<Long, FlightRecord>();
+		allMocks = new ListMap<Long, FlightRecord>();
 		try {
 			// Data file containing all flight information
 			theFile = new RandomAccessFile("flights.dat", "rw");
 			
 			// Read index file and add flight numbers and offsets to datumMock. */
 			flightData = new ListMap<Integer, FlightRecord>();
-			flightNumFile = new RandomAccessFile("flightNum.idx", "rw");
+			flightNumFile = new RandomAccessFile("flightNum.idx", "r");
 			while (flightNumFile.getFilePointer() < flightNumFile.length()) {
 				int num = flightNumFile.readInt();
 				long position = flightNumFile.readLong();
@@ -388,7 +396,7 @@ public class FlightLocator implements ActionListener {
 			
 			// Read index file and add departure times and offsets to datumMock.
 			departData = new ListMap<Long, ArrayPositionList<FlightRecord>>();
-			departTimeFile = new RandomAccessFile("departTime.idx", "rw");
+			departTimeFile = new RandomAccessFile("departTime.idx", "r");
 			
 			ArrayPositionList<FlightRecord> list;
 			FlightRecord record = null;
@@ -423,7 +431,7 @@ public class FlightLocator implements ActionListener {
 			
 			// Read index file and add destinations and offsets to datumMock.
 			destData = new ListMap<String, ArrayPositionList<FlightRecord>>();
-			destinationFile = new RandomAccessFile("destination.idx", "rw");
+			destinationFile = new RandomAccessFile("destination.idx", "r");
 			
 			ArrayPositionList<FlightRecord> flightlist;
 			FlightRecord flightrecord = null;
@@ -455,9 +463,9 @@ public class FlightLocator implements ActionListener {
 					destData.add(destination, flightlist);
 				}
 			}
-			//flightNumFile.close();
-			//departTimeFile.close();
-			//destinationFile.close();
+			flightNumFile.close();
+			departTimeFile.close();
+			destinationFile.close();
 		}
 		catch (IOException e) {
 			e.printStackTrace();
@@ -468,8 +476,34 @@ public class FlightLocator implements ActionListener {
 	 * Write updated flight data to index files.
 	 */
 	private void shutDown() {
-		
-		textDisplay.setText("Goodbye!");
+		try {
+			// Write flight data to index file.
+			RandomAccessFile flightNum = new RandomAccessFile("flightNum.idx", "rw");
+			for (Long offset : allMocks.getKeys()) {
+				// Get flight record.
+				FlightRecord record = allMocks.get(offset);
+				flightNum.writeInt(record.getFlightNumber());
+				flightNum.writeLong(offset);
+			}
+			
+			// Write destination data to index file.
+			RandomAccessFile destination = new RandomAccessFile("destination.idx", "rw");
+			/*for (String name : destData.getKeys()) {
+				
+				destination.writeUTF(name);
+				destination.writeLong(v);
+			}
+			*/
+			// Write depart data to index file.
+			RandomAccessFile departTime = new RandomAccessFile("departTime.idx", "rw");
+			
+			// Display message that program is exiting.
+			textDisplay.setText("Goodbye!");
+		} 
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+	
 	}
 	
 	/**
