@@ -88,7 +88,7 @@ public class FlightLocator implements ActionListener {
 	private JTextField delayTime;
 	
 	/** Error message for existing flight with same flight number. */
-	private JLabel flightExistsMessage;
+	private String flightExistsMessage;
 	
 	/**
 	 * Creates a new FlightLocator instance.
@@ -150,7 +150,7 @@ public class FlightLocator implements ActionListener {
 		mainFrame.setSize(550, 350);
 		mainFrame.setVisible(true);
 		
-		flightExistsMessage = new JLabel("*Sorry, there is already a flight with that flight number.");
+		flightExistsMessage = "*Sorry, there is already a flight with that flight number.";
 	}
 	
 	/**
@@ -161,7 +161,29 @@ public class FlightLocator implements ActionListener {
 	 * @param arrival_time
 	 */
 	private void ADD(int flight_number, String destination, int departure_time, int arrival_time) {
-		
+		// If there is already a flight with this number, display a message.
+		if (flightData.contains(flight_number)) {
+			textDisplay.setText(flightExistsMessage);
+		}
+		else {
+			// Add record to data file.
+			FlightRecord record = new FlightRecord(flight_number, destination, departure_time, arrival_time, theFile);
+			
+			// Update flight data.
+			flightData.add(flight_number, record);
+			
+			// Update destination data.
+			ArrayPositionList<FlightRecord> flightlist;
+			if (destData.contains(destination)) {
+				flightlist = destData.get(destination);
+				flightlist.add(record);
+			}
+			else {
+				flightlist = new ArrayPositionList<>();
+				flightlist.add(record);
+				destData.add(destination, flightlist);
+			}
+		}
 	}
 	
 	/**
@@ -302,9 +324,9 @@ public class FlightLocator implements ActionListener {
 					destData.add(destination, flightlist);
 				}
 			}
-			flightNumFile.close();
-			departTimeFile.close();
-			destinationFile.close();
+			//flightNumFile.close();
+			//departTimeFile.close();
+			//destinationFile.close();
 		}
 		catch (IOException e) {
 			e.printStackTrace();
@@ -337,22 +359,23 @@ public class FlightLocator implements ActionListener {
 			shutDown();
 		}
 		else if (arg0.getSource() == delayButton) {
-			
+			DELAY(Integer.parseInt(flightNumber.getText()), Integer.parseInt(delayTime.getText()));
 		}
 		else if (arg0.getSource() == getawayButton) {
-			
+			GETAWAY(destination.getText());
 		}
 		else if (arg0.getSource() == whoisButton) {
-			
+			WHOIS(Integer.parseInt(departureTime.getText()));
 		}
 		else if (arg0.getSource() == listButton) {
-			
+			LIST(Integer.parseInt(flightNumber.getText()));
 		}
 		else if (arg0.getSource() == cancelButton) {
-			
+			CANCEL(Integer.parseInt(flightNumber.getText()));
 		}
 		else if (arg0.getSource() == addButton) {
-			
+			ADD(Integer.parseInt(flightNumber.getText()), destination.getText(), 
+					Integer.parseInt(departureTime.getText()), Integer.parseInt(arrivalTime.getText()));
 		}
 	}
 }
