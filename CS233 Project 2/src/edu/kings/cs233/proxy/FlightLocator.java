@@ -488,14 +488,11 @@ public class FlightLocator implements ActionListener {
 			
 			// Write destination data to index file.
 			RandomAccessFile destination = new RandomAccessFile("destination.idx", "rw");
-			/*for (String name : destData.getKeys()) {
-				
-				destination.writeUTF(name);
-				destination.writeLong(v);
-			}
-			*/
+			// TODO
+			
 			// Write depart data to index file.
 			RandomAccessFile departTime = new RandomAccessFile("departTime.idx", "rw");
+			//TODO
 			
 			// Display message that program is exiting.
 			textDisplay.setText("Goodbye!");
@@ -503,7 +500,6 @@ public class FlightLocator implements ActionListener {
 		catch (IOException e) {
 			e.printStackTrace();
 		}
-	
 	}
 	
 	/**
