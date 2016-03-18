@@ -3,7 +3,6 @@ package edu.kings.cs233.proxy;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Iterator;
@@ -75,19 +74,19 @@ public class FlightLocator implements ActionListener {
 	private JTextArea textDisplay;
 	
 	/** Text field for entering flight numbers. */
-	private JTextField flightNumber;
+	private JTextField theNumber;
 	
 	/** Text field for entering destinations. */
 	private JTextField theDestination;
 	
 	/** Text field for entering departure times. */ 
-	private JTextField departureTime;
+	private JTextField theDeparture;
 	
 	/** Text field for entering arrival times. */
-	private JTextField arrivalTime;
+	private JTextField theArrival;
 	
 	/** Text field for entring a time delay. */
-	private JTextField delayTime;
+	private JTextField theDelay;
 	
 	/** Error message for existing flight with same flight number. */
 	private String flightExistsMessage;
@@ -128,11 +127,11 @@ public class FlightLocator implements ActionListener {
 		
 		textDisplay = new JTextArea("Fill in flight info, then select a command above");
 		
-		flightNumber = new JTextField();
+		theNumber = new JTextField();
 		theDestination = new JTextField();
-		departureTime = new JTextField();
-		arrivalTime = new JTextField();
-		delayTime = new JTextField();
+		theDeparture = new JTextField();
+		theArrival = new JTextField();
+		theDelay = new JTextField();
 		
 		JLabel flightNumberLabel = new JLabel("Flight number:");
 		JLabel destLabel = new JLabel("Destination:");
@@ -143,15 +142,15 @@ public class FlightLocator implements ActionListener {
 		JPanel inputPanel = new JPanel();
 		inputPanel.setLayout(new BoxLayout(inputPanel, BoxLayout.X_AXIS));
 		inputPanel.add(flightNumberLabel);
-		inputPanel.add(flightNumber);
+		inputPanel.add(theNumber);
 		inputPanel.add(destLabel);
 		inputPanel.add(theDestination);
 		inputPanel.add(departLabel);
-		inputPanel.add(departureTime);
+		inputPanel.add(theDeparture);
 		inputPanel.add(arrivalLabel);
-		inputPanel.add(arrivalTime);
+		inputPanel.add(theArrival);
 		inputPanel.add(delayLabel);
-		inputPanel.add(delayTime);
+		inputPanel.add(theDelay);
 		
 		mainFrame = new JFrame("Flight Locator Tool");
 		mainFrame.add(buttonPanel, BorderLayout.NORTH);
@@ -172,7 +171,7 @@ public class FlightLocator implements ActionListener {
 	 * @param departure_time The departure time.
 	 * @param arrival_time The arrival time.
 	 */
-	private void ADD(int flight_number, String destination, long departure_time, long arrival_time) {
+	private void add(int flight_number, String destination, long departure_time, long arrival_time) {
 		// If there is already a flight with this number, display a message.
 		if (flightData.contains(flight_number)) {
 			textDisplay.setText(flightExistsMessage);
@@ -215,7 +214,7 @@ public class FlightLocator implements ActionListener {
 	 * Locates and deletes a flight with the given flight number.
 	 * @param flight_number The flight number.
 	 */
-	private void CANCEL(int flight_number) {
+	private void cancel(int flight_number) {
 		// If there is no flight with matching number, display a message.
 		if (!flightData.contains(flight_number)) {
 			textDisplay.setText(flightDNEMessage);
@@ -224,7 +223,6 @@ public class FlightLocator implements ActionListener {
 			// Locate flight record.
 			FlightRecord record = flightData.get(flight_number);
 			long departureTime = record.getDepartureTime();
-			String destination = record.getDestination();
 			
 			// Delete flight record from data file.
 			record.setFlightNumber(-1);
@@ -257,7 +255,7 @@ public class FlightLocator implements ActionListener {
 	 * given flight number.
 	 * @param flight_number The flight number.
 	 */
-	private void LIST(int flight_number) {
+	private void list(int flight_number) {
 		// If there is no flight with matching number, display a message.
 		if (!flightData.contains(flight_number)) {
 			textDisplay.setText(flightDNEMessage);
@@ -276,7 +274,7 @@ public class FlightLocator implements ActionListener {
 	 * Finds and displays flight information and destination for flight departing at given departure time.
 	 * @param departure_time The flight's departure time.
 	 */
-	private void WHOIS(long departure_time) {
+	private void whois(long departure_time) {
 		// If there is no flight departing at the given departure time, display a message.
 		if (!departData.contains(departure_time)) {
 			textDisplay.setText("*Sorry, there are no flights departing at this time.");
@@ -302,7 +300,7 @@ public class FlightLocator implements ActionListener {
 	 * given destination.
 	 * @param destination The flight's destination.
 	 */
-	private void GETAWAY(String destination) {
+	private void getaway(String destination) {
 		// If there is not flight to the given destination, display a message.
 		if (!destData.contains(destination)) {
 			textDisplay.setText("*Sorry, there are no flights heading to that destination.");
@@ -329,10 +327,10 @@ public class FlightLocator implements ActionListener {
 	
 	/**
 	 * Updates departure and arrival times for flight specified by flight number.
-	 * @param flight_number
-	 * @param time_delay
+	 * @param flight_number The flight number.
+	 * @param time_delay The time delay.
 	 */
-	private void DELAY(int flight_number, long time_delay) {
+	private void delay(int flight_number, long time_delay) {
 		// If there is no flight found with the given flight number, display a message.
 		if (!flightData.contains(flight_number)) {
 			textDisplay.setText(flightDNEMessage);
@@ -360,10 +358,11 @@ public class FlightLocator implements ActionListener {
 	}
 	
 	/**
-	 * 
+	 * Writes updated flight records to index files by calling the shutDown() method.
 	 */
-	private void QUIT() {
-		
+	private void quit() {
+		shutDown();
+		textDisplay.setText("*Saving data...");
 	}
 	
 	/**
@@ -470,10 +469,11 @@ public class FlightLocator implements ActionListener {
 	 */
 	private void shutDown() {
 		
+		textDisplay.setText("Goodbye!");
 	}
 	
 	/**
-	 * 
+	 * Creates new instance of FlightLocator.
 	 * @param args Array of string args from command line.
 	 */
 	public static void main(String[] args) {
@@ -489,26 +489,26 @@ public class FlightLocator implements ActionListener {
 	public void actionPerformed(ActionEvent arg0) {
 		try {
 			if (arg0.getSource() == quitButton) {
-				shutDown();
+				quit();
 			}
 			else if (arg0.getSource() == delayButton) {
-				DELAY(Integer.parseInt(flightNumber.getText()), Integer.parseInt(delayTime.getText()));
+				delay(Integer.parseInt(theNumber.getText()), Integer.parseInt(theDelay.getText()));
 			}
 			else if (arg0.getSource() == getawayButton) {
-				GETAWAY(theDestination.getText());
+				getaway(theDestination.getText());
 			}
 			else if (arg0.getSource() == whoisButton) {
-				WHOIS(Integer.parseInt(departureTime.getText()));
+				whois(Integer.parseInt(theDeparture.getText()));
 			}
 			else if (arg0.getSource() == listButton) {
-				LIST(Integer.parseInt(flightNumber.getText()));
+				list(Integer.parseInt(theNumber.getText()));
 			}
 			else if (arg0.getSource() == cancelButton) {
-				CANCEL(Integer.parseInt(flightNumber.getText()));
+				cancel(Integer.parseInt(theNumber.getText()));
 			}
 			else if (arg0.getSource() == addButton) {
-				ADD(Integer.parseInt(flightNumber.getText()), theDestination.getText(), 
-						Integer.parseInt(departureTime.getText()), Integer.parseInt(arrivalTime.getText()));
+				add(Integer.parseInt(theNumber.getText()), theDestination.getText(), 
+						Integer.parseInt(theDeparture.getText()), Integer.parseInt(theArrival.getText()));
 			}
 		}
 		catch (NumberFormatException e) {
