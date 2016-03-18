@@ -12,39 +12,40 @@ import java.io.RandomAccessFile;
  * @version 2016-03-09
  */
 public class FlightRecord {
+	/** The size alloted for the flight number. */
+	private static final int FLIGHTNUMBER_SIZE = 4;
+	
+	/** The size alloted for the destination. */
+	private static final int DESTINATION_SIZE = 50;
+	
+	/** The size alloted for the departure time. */
+	private static final int DEPARTURE_SIZE = 8;
+	
+	/** The size alloted for the arrival time. */
+	private static final int ARRIVAL_SIZE = 8;
+	
+	/** The offset for this record's flight number. */
+	private static final int FLIGHTNUMBER_OFFSET = 0;
+	
+	/** The offset for this record's destination. */
+	private static final int DESTINATION_OFFSET = FLIGHTNUMBER_OFFSET + FLIGHTNUMBER_SIZE;
+	
+	/** The offset for this record's departure time. */
+	private static final int DEPARTURE_OFFSET = DESTINATION_OFFSET + DESTINATION_SIZE;
+	
+	/** The offset for this record's arrival time. */
+	private static final int ARRIVAL_OFFSET = DEPARTURE_OFFSET + DEPARTURE_SIZE;
+	
+	/** The length of this record. */
+	private static final int RECORD_LENGTH = ARRIVAL_OFFSET + ARRIVAL_SIZE;
+
 	/** File where all the records are stored. */
 	private RandomAccessFile theFile;
 
 	/** Offset into the file where this record would be stored. */
 	private long offset;
 	
-	/** The size alloted for the flight number. */
-	private final int FLIGHTNUMBER_SIZE = 4;
 	
-	/** The size alloted for the destination. */
-	private final int DESTINATION_SIZE = 50;
-	
-	/** The size alloted for the departure time. */
-	private final int DEPARTURE_SIZE = 4;
-	
-	/** The size alloted for the arrival time. */
-	private final int ARRIVAL_SIZE = 4;
-	
-	/** The offset for this record's flight number. */
-	private final int FLIGHTNUMBER_OFFSET = 0;
-	
-	/** The offset for this record's destination. */
-	private final int DESTINATION_OFFSET = FLIGHTNUMBER_OFFSET + FLIGHTNUMBER_SIZE;
-	
-	/** The offset for this record's departure time. */
-	private final int DEPARTURE_OFFSET = DESTINATION_OFFSET + DESTINATION_SIZE;
-	
-	/** The offset for this record's arrival time. */
-	private final int ARRIVAL_OFFSET = DEPARTURE_OFFSET + DEPARTURE_SIZE;
-	
-	/** The length of this record. */
-	private final int RECORD_LENGTH = ARRIVAL_OFFSET + ARRIVAL_SIZE;
-
 		/**
 		 * Create a new instance of this class for a record that is just now being
 		 * added to the data file(flights.dat). This instance will need to be added to the end of
@@ -61,8 +62,13 @@ public class FlightRecord {
 		 * @param file
 		 *            RandomAccessFile in which this object is to be read.
 		 */
-		public FlightRecord(int fn, String dest, int depart, int arrive) {
-			
+		public FlightRecord(int fn, String dest, int depart, int arrive, RandomAccessFile file) {
+			theFile = file;
+			offset = computeOffsetForRecord();
+			setFlightNumber(fn);
+			setDestination(dest);
+			setDepartureTime(depart);
+			setArrivalTime(arrive);
 		}
 		
 		/**
@@ -108,7 +114,13 @@ public class FlightRecord {
 		 *            Flight number to be stored with the Map.
 		 */
 		private void setFlightNumber(int fn) {
-			
+			try {
+				theFile.seek(offset + FLIGHTNUMBER_OFFSET);
+				theFile.writeInt(fn);
+			}
+			catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 		
 		/**
@@ -118,7 +130,13 @@ public class FlightRecord {
 		 *            Flight destination to be stored with Map.
 		 */
 		private void setDestination(String dest) {
-			
+			try {
+				theFile.seek(offset + DESTINATION_OFFSET);
+				theFile.writeUTF(dest);
+			}
+			catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 		
 		/**
@@ -128,7 +146,13 @@ public class FlightRecord {
 		 *			 Flight departure time to be stored with Map.
 		 */
 		private void setDepartureTime(int depart) {
-			
+			try {
+				theFile.seek(offset + DEPARTURE_OFFSET);
+				theFile.writeInt(depart);
+			}
+			catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 		
 		/**
@@ -137,7 +161,13 @@ public class FlightRecord {
 		 * @param arrive
 		 */
 		private void setArrivalTime(int arrive) {
-			
+			try {
+				theFile.seek(offset + ARRIVAL_OFFSET);
+				theFile.writeInt(arrive);
+			}
+			catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 		
 		/**
@@ -146,8 +176,15 @@ public class FlightRecord {
 		 * @return Flight number recorded in the data file.
 		 */
 		private int getFlightNumber() {
-			int flightNum = 0000;
-			return flightNum;
+			int flightNumber = -0;
+			try {
+				theFile.seek(offset + FLIGHTNUMBER_OFFSET);
+				flightNumber = theFile.readInt();
+			}
+			catch (IOException e) {
+				e.printStackTrace();
+			}
+			return flightNumber;
 		}
 		
 		/**
@@ -157,6 +194,13 @@ public class FlightRecord {
 		 */
 		private String getDestination() {
 			String destination = "";
+			try {
+				theFile.seek(offset + DESTINATION_OFFSET);
+				destination = theFile.readUTF();
+			}
+			catch (IOException e) {
+				e.printStackTrace();
+			}
 			return destination;
 		}
 		
@@ -166,8 +210,15 @@ public class FlightRecord {
 		 * @return Departure time recorded in the data file.
 		 */
 		private int getDepartureTime() {
-			int departure = 0;
-			return departure;
+			int departureTime = -0;
+			try {
+				theFile.seek(offset + DEPARTURE_OFFSET);
+				departureTime = theFile.readInt();
+			}
+			catch (IOException e) {
+				e.printStackTrace();
+			}
+			return departureTime;
 		}
 		
 		/**
@@ -176,7 +227,14 @@ public class FlightRecord {
 		 * @return Arrival time recorded in the data file.
 		 */
 		private int getArrivalTime() {
-			int arrival = 0;
-			return arrival;
+			int arrivalTime = -0;
+			try {
+				theFile.seek(offset + ARRIVAL_OFFSET);
+				arrivalTime = theFile.readInt();
+			}
+			catch (IOException e) {
+				e.printStackTrace();
+			}
+			return arrivalTime;
 		}
 }

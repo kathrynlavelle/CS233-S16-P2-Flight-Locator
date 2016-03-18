@@ -1,20 +1,27 @@
 package edu.kings.cs233.proxy;
 
-import java.awt.List;
+import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
+
 import edu.kings.cs.util.ArrayPositionList;
 import edu.kings.cs.util.Map;
-import edu.kings.cs233.hw.indexfile.DatumMock;
-import edu.kings.cs233.hw.indexfile.ListMap;
 
 /**
+ * GUI application that records and locates all flights leaving from one airport over the course of a day.
  * 
  * @author Kathryn Lavelle
- * @version 2016-03-09
+ * @version 2016-03-18
  */
-public class FlightLocator {
+public class FlightLocator implements ActionListener {
 	/** Map of flight numbers to their corresponding FlightRecord. */
 	private ListMap<Integer, FlightRecord> flightData;
 	
@@ -24,19 +31,92 @@ public class FlightLocator {
 	/** Map of destinations to a list of FlightRecords. */
 	private ListMap<String, ArrayPositionList<FlightRecord>> destData;
 	
-	/** File where all the records are stored. */
+	/** Data file where all the records are stored. */
 	private RandomAccessFile theFile;
 	
-	/** Index files. */
+	/** FlightNum index file. */
 	private RandomAccessFile flightNumFile;
+	
+	/** DepartTime index file. */
 	private RandomAccessFile departTimeFile;
+	
+	/** Destination index file. */
 	private RandomAccessFile destinationFile;
+	
+	/** Main window component. */
+	private JFrame mainFrame;
+	
+	/** Button that adds a new flight record. */
+	private JButton addButton;
+	
+	/** Button that cancels a flight with given flight number. */
+	private JButton cancelButton;
+	
+	/** Button that finds and displays a flight with given flight number. */
+	private JButton listButton;
+	
+	/** Button that finds and displays a flight with given departure time. */
+	private JButton whoisButton;
+	
+	/** Button that finds and displays the next flight to a given destination. */
+	private JButton getawayButton;
+	
+	/** Button that delays a flight with given flight number. */
+	private JButton delayButton;
+	
+	/** Button that shutdowns program. */
+	private JButton quitButton;
+	
+	/** Panel containing the command buttons. */
+	private JPanel buttonPanel;
+	
+	/** Panel for inputting search criteria. */
+	private JPanel inputPanel; 
 
+	/** Text Area for displaying flight information. */
+	private JTextArea textDisplay;
+	
 	/**
-	 * 
+	 * Creates a new FlightLocator instance.
 	 */
 	public FlightLocator() {
+		startUp();
 		
+		addButton = new JButton("ADD");
+		cancelButton = new JButton("CANCEL");
+		listButton = new JButton("LIST");
+		whoisButton = new JButton("WHOIS");
+		getawayButton = new JButton("GETAWAY");
+		delayButton = new JButton("DELAY");
+		quitButton = new JButton("QUIT");
+		
+		addButton.addActionListener(this);
+		cancelButton.addActionListener(this);
+		listButton.addActionListener(this);
+		whoisButton.addActionListener(this);
+		getawayButton.addActionListener(this);
+		delayButton.addActionListener(this);
+		quitButton.addActionListener(this);
+		
+		buttonPanel = new JPanel();
+		buttonPanel.add(addButton);
+		buttonPanel.add(cancelButton);
+		buttonPanel.add(listButton);
+		buttonPanel.add(whoisButton);
+		buttonPanel.add(getawayButton);
+		buttonPanel.add(delayButton);
+		buttonPanel.add(quitButton);
+		
+		textDisplay = new JTextArea();
+		
+		inputPanel = new JPanel();
+		
+		mainFrame = new JFrame("Flight Locator Tool");
+		mainFrame.add(buttonPanel, BorderLayout.NORTH);
+		mainFrame.add(textDisplay, BorderLayout.CENTER);
+		mainFrame.add(inputPanel, BorderLayout.SOUTH);
+		mainFrame.setSize(550, 500);
+		mainFrame.setVisible(true);
 	}
 	
 	/**
@@ -106,11 +186,11 @@ public class FlightLocator {
 		Map<Long, FlightRecord> allMocks = new ListMap<Long, FlightRecord>();
 		try {
 			// Data file containing all flight information
-			theFile = new RandomAccessFile("flights.dat", "r");
+			theFile = new RandomAccessFile("flights.dat", "rw");
 			
 			// Read index file and add flight numbers and offsets to datumMock. */
 			flightData = new ListMap<Integer, FlightRecord>();
-			flightNumFile = new RandomAccessFile("flightNum.idx", "r");
+			flightNumFile = new RandomAccessFile("flightNum.idx", "rw");
 			while (flightNumFile.getFilePointer() < flightNumFile.length()) {
 				int num = flightNumFile.readInt();
 				long position = flightNumFile.readLong();
@@ -121,10 +201,10 @@ public class FlightLocator {
 			
 			// Read index file and add departure times and offsets to datumMock.
 			departData = new ListMap<Long, ArrayPositionList<FlightRecord>>();
-			departTimeFile = new RandomAccessFile("departTime.idx", "r");
+			departTimeFile = new RandomAccessFile("departTime.idx", "rw");
 			
 			ArrayPositionList<FlightRecord> list;
-			FlightRecord record;
+			FlightRecord record = null;
 			while (departTimeFile.getFilePointer() < departTimeFile.length()) {
 				long time = departTimeFile.readLong();
 				long position = departTimeFile.readLong();
@@ -156,10 +236,10 @@ public class FlightLocator {
 			
 			// Read index file and add destinations and offsets to datumMock.
 			destData = new ListMap<String, ArrayPositionList<FlightRecord>>();
-			destinationFile = new RandomAccessFile("destination.idx", "r");
+			destinationFile = new RandomAccessFile("destination.idx", "rw");
 			
 			ArrayPositionList<FlightRecord> flightlist;
-			FlightRecord flightrecord;
+			FlightRecord flightrecord = null;
 			while (destinationFile.getFilePointer() < destinationFile.length()) {
 				String destination = destinationFile.readUTF();
 				long position = destinationFile.readLong();
@@ -187,14 +267,14 @@ public class FlightLocator {
 					flightlist.add(flightrecord);
 					destData.add(destination, flightlist);
 				}
-			}	
+			}
+			flightNumFile.close();
+			departTimeFile.close();
+			destinationFile.close();
 		}
-		catch(IOException e) {
+		catch (IOException e) {
 			e.printStackTrace();
 		}
-		flightNumFile.close();
-		departTimeFile.close();
-		destinationFile.close();
 	}
 	
 	/**
@@ -202,5 +282,43 @@ public class FlightLocator {
 	 */
 	private void shutDown() {
 		
+	}
+	
+	/**
+	 * 
+	 * @param args Array of string args from command line.
+	 */
+	public static void main(String[] args) {
+		new FlightLocator();
+	}
+
+	/**
+	 * Called whenever an object triggers an event.
+	 * 
+	 * @param arg0 Action event that was created.
+	 */
+	@Override
+	public void actionPerformed(ActionEvent arg0) {
+		if (arg0.getSource() == quitButton) {
+			shutDown();
+		}
+		else if (arg0.getSource() == delayButton) {
+			
+		}
+		else if (arg0.getSource() == getawayButton) {
+			
+		}
+		else if (arg0.getSource() == whoisButton) {
+			
+		}
+		else if (arg0.getSource() == listButton) {
+			
+		}
+		else if (arg0.getSource() == cancelButton) {
+			
+		}
+		else if (arg0.getSource() == addButton) {
+			
+		}
 	}
 }
