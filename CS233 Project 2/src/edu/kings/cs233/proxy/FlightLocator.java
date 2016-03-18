@@ -9,8 +9,10 @@ import java.io.RandomAccessFile;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
+import javax.swing.JTextField;
 
 import edu.kings.cs.util.ArrayPositionList;
 import edu.kings.cs.util.Map;
@@ -67,14 +69,26 @@ public class FlightLocator implements ActionListener {
 	/** Button that shutdowns program. */
 	private JButton quitButton;
 	
-	/** Panel containing the command buttons. */
-	private JPanel buttonPanel;
-	
-	/** Panel for inputting search criteria. */
-	private JPanel inputPanel; 
-
-	/** Text Area for displaying flight information. */
+	/** Text area for displaying flight information. */
 	private JTextArea textDisplay;
+	
+	/** Text field for entering flight numbers. */
+	private JTextField flightNumber;
+	
+	/** Text field for entering destinations. */
+	private JTextField destination;
+	
+	/** Text field for entering departure times. */ 
+	private JTextField departureTime;
+	
+	/** Text field for entering arrival times. */
+	private JTextField arrivalTime;
+	
+	/** Text field for entring a time delay. */
+	private JTextField delayTime;
+	
+	/** Error message for existing flight with same flight number. */
+	private JLabel flightExistsMessage;
 	
 	/**
 	 * Creates a new FlightLocator instance.
@@ -98,7 +112,7 @@ public class FlightLocator implements ActionListener {
 		delayButton.addActionListener(this);
 		quitButton.addActionListener(this);
 		
-		buttonPanel = new JPanel();
+		JPanel buttonPanel = new JPanel();
 		buttonPanel.add(addButton);
 		buttonPanel.add(cancelButton);
 		buttonPanel.add(listButton);
@@ -109,18 +123,38 @@ public class FlightLocator implements ActionListener {
 		
 		textDisplay = new JTextArea();
 		
-		inputPanel = new JPanel();
+		flightNumber = new JTextField("Flight number");
+		destination = new JTextField("Destination");
+		departureTime = new JTextField("Departure time");
+		arrivalTime = new JTextField("Arrival time");
+		delayTime = new JTextField("Delay time");
+		
+		flightNumber.addActionListener(this);
+		destination.addActionListener(this);
+		departureTime.addActionListener(this);
+		arrivalTime.addActionListener(this);
+		delayTime.addActionListener(this);
+		
+		JPanel inputPanel = new JPanel();
+		inputPanel.add(flightNumber);
+		inputPanel.add(destination);
+		inputPanel.add(departureTime);
+		inputPanel.add(arrivalTime);
+		inputPanel.add(delayTime);
 		
 		mainFrame = new JFrame("Flight Locator Tool");
 		mainFrame.add(buttonPanel, BorderLayout.NORTH);
 		mainFrame.add(textDisplay, BorderLayout.CENTER);
 		mainFrame.add(inputPanel, BorderLayout.SOUTH);
-		mainFrame.setSize(550, 500);
+		mainFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		mainFrame.setSize(550, 350);
 		mainFrame.setVisible(true);
+		
+		flightExistsMessage = new JLabel("*Sorry, there is already a flight with that flight number.");
 	}
 	
 	/**
-	 * 
+	 * Adds a flight to the data file if there is not already a record with this flight number.
 	 * @param flight_number
 	 * @param destination
 	 * @param departure_time
