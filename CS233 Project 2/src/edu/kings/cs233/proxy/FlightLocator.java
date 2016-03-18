@@ -1,8 +1,10 @@
 package edu.kings.cs233.proxy;
 
 import java.awt.List;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 
+import edu.kings.cs.util.ArrayPositionList;
 import edu.kings.cs.util.Map;
 import edu.kings.cs233.hw.indexfile.DatumMock;
 import edu.kings.cs233.hw.indexfile.ListMap;
@@ -17,18 +19,18 @@ public class FlightLocator {
 	private ListMap<Integer, FlightRecord> flightData;
 	
 	/** Map of departure times to a list of FlightRecords. */
-	private ListMap<Long, List<FlightRecord>> departData;
+	private ListMap<Long, ArrayPositionList<FlightRecord>> departData;
 	
 	/** Map of destinations to a list of FlightRecords. */
-	private ListMap<String, List<FlightRecord>> destData;
+	private ListMap<String, ArrayPositionList<FlightRecord>> destData;
 	
 	/** File where all the records are stored. */
-	private RandomAccessFile flights;
+	private RandomAccessFile theFile;
 	
 	/** Index files. */
-	private RandomAccessFile flightNum;
-	private RandomAccessFile departTime;
-	private RandomAccessFile destination;
+	private RandomAccessFile flightNumFile;
+	private RandomAccessFile departTimeFile;
+	private RandomAccessFile destinationFile;
 
 	/**
 	 * 
@@ -100,67 +102,99 @@ public class FlightLocator {
 	 * Read and collect flight data from index files.
 	 */
 	private void startUp() {
-		/* Map of all datumMocks to prevent duplicates. */
-		Map<Integer, FlightRecord> allMocks = new ListMap<Long, FlightRecord>();
+		// Map of all datumMocks to prevent duplicates.
+		Map<Long, FlightRecord> allMocks = new ListMap<Long, FlightRecord>();
 		try {
-			/* The data file containing all flight information. */
+			// Data file containing all flight information
 			theFile = new RandomAccessFile("flights.dat", "r");
 			
-			/* Read flight number index file and add flight numbers and offsets to datumMock. */
+			// Read index file and add flight numbers and offsets to datumMock. */
 			flightData = new ListMap<Integer, FlightRecord>();
-			flightNum = new RandomAccessFile("flightNum.idx", "r");
-			while (flightNum.getFilePointer() < flightNum.length()) {
-				int num = flightNum.readInt();
-				long position = flightNum.readLong();
-				FlightRecord flightRecord = new FlightRecord(position, theFile);
-				flightData.add(num, flightRecord);
-				allMocks.add(position, flightRecord);
+			flightNumFile = new RandomAccessFile("flightNum.idx", "r");
+			while (flightNumFile.getFilePointer() < flightNumFile.length()) {
+				int num = flightNumFile.readInt();
+				long position = flightNumFile.readLong();
+				FlightRecord record = new FlightRecord(position, theFile);
+				flightData.add(num, record);
+				allMocks.add(position, record);
 			}
 			
-			/* Read departure time index file and add departure times and offsets to datumMock. */
-			List<FlightRecord> departFlightList = new List<FlightRecord>();
-			departData = new ListMap<Long, departFlightList>();
+			// Read index file and add departure times and offsets to datumMock.
+			departData = new ListMap<Long, ArrayPositionList<FlightRecord>>();
 			departTimeFile = new RandomAccessFile("departTime.idx", "r");
+			
+			ArrayPositionList<FlightRecord> list;
+			FlightRecord record;
 			while (departTimeFile.getFilePointer() < departTimeFile.length()) {
 				long time = departTimeFile.readLong();
 				long position = departTimeFile.readLong();
-				for (Long pos : allMocks.getKeys()) {
-					if (pos.equals(position)) {
-						departData.add(time, allMocks.get(pos));
+				
+				// For each existing flightRecord
+				for (Long key : allMocks.getKeys()) {
+					// If the flight already exists
+					if (key.equals(position)) {
+						// Get the proxy instance.
+						record = allMocks.get(key);
 					}
+					// Else create a new proxy for this flight and add to map of all proxys.
 					else {
-						FlightRecord flightRecord = new FlightRecord(position, theFile);
-						departData.add(time, departFlightList.add(flightRecord));
-						allMocks.add(position, flightRecord);
+						record = new FlightRecord(position, theFile);
+						allMocks.add(position, record);
 					}
 				}
-			}
+				
+				if (departData.contains(time)) {
+					list = departData.get(time);
+					list.add(record);
+				}
+				else {
+					list = new ArrayPositionList<>();
+					list.add(record);
+					departData.add(time, list);
+				}
+			}	
 			
-			/* Read destination index file and add destinations and offsets to datumMock. */
-			List<FlightRecord> destFlightList = new List<FlightRecord>();
-			destData = new ListMap<String, destFlightList>();
+			// Read index file and add destinations and offsets to datumMock.
+			destData = new ListMap<String, ArrayPositionList<FlightRecord>>();
 			destinationFile = new RandomAccessFile("destination.idx", "r");
+			
+			ArrayPositionList<FlightRecord> flightlist;
+			FlightRecord flightrecord;
 			while (destinationFile.getFilePointer() < destinationFile.length()) {
-				String dest = destinationFile.readUTF();
+				String destination = destinationFile.readUTF();
 				long position = destinationFile.readLong();
-				for (long pos : allMocks.getKeys()) {
-					if (pos.equals(position)) {
-						destData.add(dest, allMocks.get(pos));
+				
+				// For each existing flightRecord
+				for (Long key : allMocks.getKeys()) {
+					// If the flight already exists
+					if (key.equals(position)) {
+						// Get the proxy instance.
+						flightrecord = allMocks.get(key);
 					}
+					// Else create a new proxy for this flight and add to map of all proxys.
 					else {
-						FlightRecord flightRecord = new FlightRecord(position, theFile);
-						destData.add(dest, destFlightList.add(flightRecord));
-						allMocks.add(position, flightRecord);
+						flightrecord = new FlightRecord(position, theFile);
+						allMocks.add(position, flightrecord);
 					}
 				}
-			}
+				
+				if (destData.contains(destination)) {
+					flightlist = destData.get(destination);
+					flightlist.add(flightrecord);
+				}
+				else {
+					flightlist = new ArrayPositionList<>();
+					flightlist.add(flightrecord);
+					destData.add(destination, flightlist);
+				}
+			}	
 		}
 		catch(IOException e) {
 			e.printStackTrace();
 		}
-		flightNum.close();
-		departTime.close();
-		destination.close();
+		flightNumFile.close();
+		departTimeFile.close();
+		destinationFile.close();
 	}
 	
 	/**
